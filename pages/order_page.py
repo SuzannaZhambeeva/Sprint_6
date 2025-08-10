@@ -1,58 +1,58 @@
 import allure
-from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from locators.order_page_locators import OrderPageLocators as Locators
+from pages.base_page import BasePage
 
-class OrderPage:
+class OrderPage(BasePage):
     def __init__(self, driver):
-        self.driver = driver
+        super().__init__(driver)
         self.wait = WebDriverWait(driver, 20)
 
     @allure.step("Заполняем форму заказа")
     def fill_order_form(self, data):
-        self.driver.find_element(By.XPATH, "//input[@placeholder='* Имя']").send_keys(data["first_name"])
-        self.driver.find_element(By.XPATH, "//input[@placeholder='* Фамилия']").send_keys(data["last_name"])
-        self.driver.find_element(By.XPATH, "//input[@placeholder='* Адрес: куда привезти заказ']").send_keys(data["address"])
+        self.click_element(Locators.FIRST_NAME_INPUT)
+        self.find_element(Locators.FIRST_NAME_INPUT).send_keys(data["first_name"])
 
-        self.driver.find_element(By.XPATH, "//input[@placeholder='* Станция метро']").click()
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, f"//button/div[text()='{data['metro']}']"))).click()
+        self.click_element(Locators.LAST_NAME_INPUT)
+        self.find_element(Locators.LAST_NAME_INPUT).send_keys(data["last_name"])
 
-        self.driver.find_element(By.XPATH, "//input[@placeholder='* Телефон: на него позвонит курьер']").send_keys(data["phone"])
-        self.driver.find_element(By.XPATH, "//button[text()='Далее']").click()
+        self.click_element(Locators.ADDRESS_INPUT)
+        self.find_element(Locators.ADDRESS_INPUT).send_keys(data["address"])
 
-        date_input = self.wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@placeholder='* Когда привезти самокат']")))
+        self.click_element(Locators.METRO_INPUT)
+        self.wait.until(EC.element_to_be_clickable(Locators.METRO_OPTION(data['metro']))).click()
+
+        self.click_element(Locators.PHONE_INPUT)
+        self.find_element(Locators.PHONE_INPUT).send_keys(data["phone"])
+
+        self.click_element(Locators.NEXT_BUTTON)
+
+        date_input = self.wait.until(EC.visibility_of_element_located(Locators.DATE_INPUT))
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", date_input)
         date_input.clear()
         date_input.send_keys(data["date"])
         date_input.send_keys(Keys.ENTER)
 
-        self.driver.find_element(By.CLASS_NAME, "Dropdown-arrow").click()
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, f"//div[text()='{data['rent_duration']}']"))).click()
+        self.click_element(Locators.RENT_DROPDOWN)
+        self.wait.until(EC.element_to_be_clickable(Locators.RENT_OPTION(data['rent_duration']))).click()
 
         if data["color"] == "black":
-            self.driver.find_element(By.ID, "black").click()
+            self.click_element(Locators.COLOR_BLACK)
         elif data["color"] == "grey":
-            self.driver.find_element(By.ID, "grey").click()
+            self.click_element(Locators.COLOR_GREY)
 
-        order_button = self.wait.until(EC.element_to_be_clickable((
-        By.XPATH,
-        "//div[contains(@class, 'Order_Buttons__')]/button[normalize-space()='Заказать']"
-    )))
+        order_button = self.wait.until(EC.element_to_be_clickable(Locators.ORDER_BUTTON))
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", order_button)
         order_button.click()
 
-        confirm_button = self.wait.until(
-            EC.element_to_be_clickable((By.XPATH, "//button[text()='Да']"))
-        )
+        confirm_button = self.wait.until(EC.element_to_be_clickable(Locators.CONFIRM_BUTTON))
         confirm_button.click()
 
     def is_order_successful(self):
         try:
-            self.wait.until(EC.visibility_of_element_located((
-                By.XPATH,
-                "//button[text()='Посмотреть статус']"
-            )))
+            self.wait.until(EC.visibility_of_element_located(Locators.STATUS_BUTTON))
             return True
         except:
             return False
-

@@ -13,6 +13,14 @@ from selenium.webdriver.common.by import By
 from pages.main_page import MainPage
 from pages.order_page import OrderPage
 
+@pytest.fixture
+def driver():
+    options = Options()
+    driver = webdriver.Firefox(options=options)
+    driver.set_window_size(1920, 1080)
+    yield driver
+    driver.quit()
+
 
 @allure.title("Инициализация драйвера Firefox")
 @pytest.fixture
@@ -69,7 +77,7 @@ def test_scooter_logo_redirects_to_home(driver):
     home_page.click_order_button(is_top=True)
 
     order_page = OrderPage(driver)
-    home_url = home_page.base_url
+    home_url = MainPage.URL
     redirected_url = home_page.click_scooter_logo()
     assert redirected_url == home_url, f"Ожидался редирект на {home_url}, но был {redirected_url}"
 
